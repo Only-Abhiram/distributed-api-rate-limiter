@@ -1,0 +1,43 @@
+
+services:
+  redis:
+    image: redis:7
+
+  upstream:
+    build:
+      context: .
+      dockerfile: upstream/Dockerfile
+
+  gateway1:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    environment:
+      REDIS_HOST: redis
+      UPSTREAM_URL: http://upstream:4000
+      INSTANCE_ID: gateway1
+    depends_on:
+      - redis
+      - upstream
+
+  gateway2:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    environment:
+      REDIS_HOST: redis
+      UPSTREAM_URL: http://upstream:4000
+      INSTANCE_ID: gateway2
+    depends_on:
+      - redis
+      - upstream
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - gateway1
+      - gateway2
